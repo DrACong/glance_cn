@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+var (
+	videosBilibiliWidgetTemplate             = mustParseTemplate("bilibili.html", "widget-base.html", "bilibili-card-contents.html")
+	videosBilibiliWidgetGridTemplate         = mustParseTemplate("bilibili-grid.html", "widget-base.html", "bilibili-card-contents.html")
+)
+
 type videosBilibiliWidget struct {
 	widgetBase        `yaml:",inline"`
 	Videos            bilibiliVideoList `yaml:"-"`
@@ -59,11 +64,9 @@ func (widget *videosBilibiliWidget) Render() template.HTML {
 
 	switch widget.Style {
 	case "grid-cards":
-		template = videosWidgetGridTemplate
-	case "vertical-list":
-		template = videosWidgetVerticalListTemplate
+		template = videosBilibiliWidgetGridTemplate
 	default:
-		template = videosWidgetTemplate
+		template = videosBilibiliWidgetTemplate
 	}
 
 	return widget.renderTemplate(widget, template)
@@ -79,6 +82,10 @@ type bilibiliFeedResponseJson struct {
 				Mid  int64  `json:"mid"`  // UP主ID
 				Name string `json:"name"` // UP主名称
 			} `json:"owner"`
+			Stats struct {
+				View int64 `json:"view"` // 播放量
+				Danmaku int64 `json:"danmaku"` // 弹幕数
+			} `json:"stat"`
 		} `json:"list"`
 	} `json:"data"`
 }
@@ -102,11 +109,22 @@ func getBilibiliFeedURL(classify string) string {
 	}
 }
 
-type bilibiliVideoList []video
+type videoBilibili struct {
+	ThumbnailUrl string
+	Title        string
+	Url          string
+	Author       string
+	AuthorUrl    string
+	Plays        int64
+	Likes		 int64
+	Desc		 string
+}
 
-func (v bilibiliVideoList) sortByNewest() bilibiliVideoList {
+type bilibiliVideoList []videoBilibili
+
+func (v bilibiliVideoList) sortByView() bilibiliVideoList {
 	sort.Slice(v, func(i, j int) bool {
-		return v[i].TimePosted.After(v[j].TimePosted)
+		return v[i].Plays > v[j].Plays
 	})
 
 	return v
@@ -147,13 +165,14 @@ func fetchBilibiliClassifyUploads(classify []string, videoUrlTemplate string, in
 		for j := range response.Data.List {
 			v := &response.Data.List[j]
 
-			videos = append(videos, video{
+			videos = append(videos, videoBilibili{
 				ThumbnailUrl: v.Pic,
 				Title:        v.Title,
 				Url:          fmt.Sprintf("https://www.bilibili.com/video/%s", v.Bvid),
 				Author:       v.Owner.Name,
 				AuthorUrl:    fmt.Sprintf("https://space.bilibili.com/%d", v.Owner.Mid),
-				TimePosted:   time.Now(),
+				Plays:        v.Stats.View,
+				Likes:        v.Stats.Danmaku,
 			})
 		}
 	}
@@ -162,7 +181,7 @@ func fetchBilibiliClassifyUploads(classify []string, videoUrlTemplate string, in
 		return nil, errNoContent
 	}
 
-	//videos.sortByNewest()
+	videos.sortByView()
 
 	if failed > 0 {
 		return videos, fmt.Errorf("%w: missing videos from %d channels", errPartialContent, failed)
