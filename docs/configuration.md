@@ -691,6 +691,33 @@ Placeholders:
 
 `{VIDEO-ID}` - the ID of the video
 
+#### Videos - Bilibili
+Display a list of the Bilibili videos. Most params same as previous video type.
+
+Example:
+
+```yaml
+- type: videos-bilibili
+  classify:
+    - weekly
+    - all
+    - history
+    - rank/all
+  style: grid-cards
+  collapse-after-rows: 2
+```
+Preview:
+![](images/bilibili-widget-grid-cards-preview.png)
+
+#### Properties
+| Name | Type | Required | Default |
+| ---- | ---- | -------- | ------- |
+| classify | array | yes | |
+| limit | integer | no | 25 |
+| style | string | no | horizontal-cards |
+| collapse-after | integer | no | 7 |
+| collapse-after-rows | integer | no | 4 |
+
 ### Hacker News
 Display a list of posts from [Hacker News](https://news.ycombinator.com/).
 

@@ -115,8 +115,8 @@ type videoBilibili struct {
 	Url          string
 	Author       string
 	AuthorUrl    string
-	Plays        int64
-	Likes		 int64
+	Views        int64
+	Danmaku		 int64
 	Desc		 string
 }
 
@@ -124,7 +124,7 @@ type bilibiliVideoList []videoBilibili
 
 func (v bilibiliVideoList) sortByView() bilibiliVideoList {
 	sort.Slice(v, func(i, j int) bool {
-		return v[i].Plays > v[j].Plays
+		return v[i].Views > v[j].Views
 	})
 
 	return v
@@ -141,6 +141,7 @@ func fetchBilibiliClassifyUploads(classify []string, videoUrlTemplate string, in
 		feedUrl := getBilibiliFeedURL(classify[i])
 		request, _ := http.NewRequest("GET", feedUrl, nil)
 		request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+		request.Header.Set("Referer", "https://www.bilibili.com/")
 		requests = append(requests, request)
 	}
 
@@ -171,8 +172,8 @@ func fetchBilibiliClassifyUploads(classify []string, videoUrlTemplate string, in
 				Url:          fmt.Sprintf("https://www.bilibili.com/video/%s", v.Bvid),
 				Author:       v.Owner.Name,
 				AuthorUrl:    fmt.Sprintf("https://space.bilibili.com/%d", v.Owner.Mid),
-				Plays:        v.Stats.View,
-				Likes:        v.Stats.Danmaku,
+				Views:        v.Stats.View,
+				Danmaku:        v.Stats.Danmaku,
 			})
 		}
 	}

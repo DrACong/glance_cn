@@ -22,7 +22,7 @@
         </span>
 
         <p style="display: inherit; flex-direction: row; gap: 12px;">
-            <span class="flex">
+            <span class="flex" title="播放量">
                 <svg style="width: 18px; height: 18px; margin-right: 4px;" xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 18 18" width="18" height="18">
                     <path
@@ -32,9 +32,9 @@
                         d="M11.035350000000001 8.2265625C11.6307375 8.570325 11.6307375 9.42975 11.0353125 9.773475L8.652149999999999 11.149425C8.0567625 11.49315 7.3125 11.063475 7.3125075 10.37595L7.3125075 7.624124999999999C7.3125075 6.936607500000001 8.0567625 6.5069025 8.652149999999999 6.850664999999999L11.035350000000001 8.2265625z"
                         fill="currentColor"></path>
                 </svg>
-                {{ .Plays }}
+                {{ .Views }}
             </span>
-            <span class="flex">
+            <span class="flex" title="弹幕">
                 <svg style="width: 18px; height: 18px; margin-right: 4px;" xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 18 18" width="18" height="18">
                     <path
@@ -53,7 +53,7 @@
                         d="M7.03125 10.5C7.03125 10.810649999999999 6.7794075000000005 11.0625 6.46875 11.0625L6.09375 11.0625C5.7830925 11.0625 5.53125 10.810649999999999 5.53125 10.5C5.53125 10.189350000000001 5.7830925 9.9375 6.09375 9.9375L6.46875 9.9375C6.7794075000000005 9.9375 7.03125 10.189350000000001 7.03125 10.5z"
                         fill="currentColor"></path>
                 </svg>
-                {{ .Likes }}
+                {{ .Danmaku }}
             </span>
         </p>
     </div>
