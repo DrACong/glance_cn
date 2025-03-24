@@ -2,6 +2,7 @@ package glance
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"log/slog"
@@ -130,17 +131,55 @@ func (v bilibiliVideoList) sortByView() bilibiliVideoList {
 	return v
 }
 
+type bilibiliFingerResponse struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		B3 string `json:"b_3"`
+		B4 string `json:"b_4"`
+	} `json:"data"`
+}
+
+// 获取 b_3 和 b_4 的值
+func fetchBilibiliFingerSpi() (string, string, error) {
+	// 发送请求
+	resp, err := http.Get("https://api.bilibili.com/x/frontend/finger/spi")
+	if err != nil {
+		return "", "", fmt.Errorf("failed to fetch bilibili finger spi: %w", err)
+	}
+	defer resp.Body.Close()
+
+	var result bilibiliFingerResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", "", fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if result.Code != 0 {
+		return "", "", fmt.Errorf("API returned non-zero code: %d, message: %s", result.Code, result.Message)
+	}
+
+	return result.Data.B3, result.Data.B4, nil
+}
+
 //all:https://api.bilibili.com/x/web-interface/popular?ps=20&pn=1&wts=1742301430
 //weekly:https://api.bilibili.com/x/web-interface/popular/series/one?number=312&wts=1742227080
 //history: https://api.bilibili.com/x/web-interface/popular/precious?page_size=100&page=1&wts=1742301563
 //rank/all: https://api.bilibili.com/x/web-interface/ranking/v2?rid=0&type=all&wts=1742301628
 func fetchBilibiliClassifyUploads(classify []string, videoUrlTemplate string, includeShorts bool) (bilibiliVideoList, error) {
+	b3, b4, err := fetchBilibiliFingerSpi()
+	if err != nil {
+		slog.Error("Failed to fetch bilibili finger spi", "error", err)
+		return nil, fmt.Errorf("failed to fetch bilibili finger spi: %w", err)
+	}
+	cookie := fmt.Sprintf("buvid3=%s;buvid4=%s", b3, b4)
+
 	requests := make([]*http.Request, 0, len(classify))
 
 	for i := range classify {
 		feedUrl := getBilibiliFeedURL(classify[i])
 		request, _ := http.NewRequest("GET", feedUrl, nil)
 		request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+		request.Header.Set("Cookie", cookie)
 		request.Header.Set("Referer", "https://www.bilibili.com/")
 		requests = append(requests, request)
 	}
